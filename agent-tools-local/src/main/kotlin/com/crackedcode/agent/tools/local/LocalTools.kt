@@ -337,6 +337,7 @@ private class UnifiedDiffApplier(
         for (patchFile in files) {
             val targetRelative = patchFile.newPath ?: patchFile.oldPath ?: error("Patch file is missing both paths.")
             val targetPath = resolveWorkspacePath(targetRelative, workspaceRoot)
+            requireWritableWorkspacePath(targetPath, workspaceRoot)
             val sourceLines = when {
                 patchFile.oldPath == null -> emptyList()
                 Files.exists(targetPath) -> Files.readAllLines(targetPath, StandardCharsets.UTF_8)
@@ -537,6 +538,42 @@ private fun existingRealPath(path: Path): Path? {
     } else {
         null
     }
+}
+
+private fun requireWritableWorkspacePath(path: Path, workspaceRoot: Path) {
+    val normalizedWorkspaceRoot = workspaceRoot.normalize()
+    val normalizedPath = path.normalize()
+    if (!normalizedPath.startsWith(normalizedWorkspaceRoot)) {
+        error("Path escapes workspace root: ${workspaceRelative(path, workspaceRoot)}")
+    }
+
+    val realWorkspaceRoot = existingRealPath(normalizedWorkspaceRoot) ?: normalizedWorkspaceRoot
+    var current = normalizedWorkspaceRoot
+    for (segment in normalizedWorkspaceRoot.relativize(normalizedPath)) {
+        current = current.resolve(segment)
+        if (Files.isSymbolicLink(current)) {
+            error("Path traverses a symbolic link outside the workspace: ${workspaceRelative(path, workspaceRoot)}")
+        }
+    }
+
+    val existingAncestor = nearestExistingPath(normalizedPath)
+    if (existingAncestor != null) {
+        val realAncestor = existingRealPath(existingAncestor) ?: existingAncestor
+        if (!realAncestor.startsWith(realWorkspaceRoot)) {
+            error("Path escapes workspace root: ${workspaceRelative(path, workspaceRoot)}")
+        }
+    }
+}
+
+private fun nearestExistingPath(path: Path): Path? {
+    var current: Path? = path
+    while (current != null) {
+        if (Files.exists(current) || Files.isSymbolicLink(current)) {
+            return current
+        }
+        current = current.parent
+    }
+    return null
 }
 
 private fun resolveWorkspacePath(candidate: String, workspaceRoot: Path): Path {
