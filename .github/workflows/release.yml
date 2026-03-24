@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve project version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(./gradlew -q printVersion)"
+          TAG_NAME="${GITHUB_REF_NAME}"
+          if [[ "${TAG_NAME}" != "v${VERSION}" ]]; then
+            echo "Git tag ${TAG_NAME} does not match project version v${VERSION}" >&2
+            exit 1
+          fi
+
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "tag_name=${TAG_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "tar_path=agent-cli/build/distributions/ccode-${VERSION}.tar" >> "${GITHUB_OUTPUT}"
+          echo "zip_path=agent-cli/build/distributions/ccode-${VERSION}.zip" >> "${GITHUB_OUTPUT}"
+
+      - name: Run test suite
+        run: ./gradlew test verifyCcodeInstallDist
+
+      - name: Build release archives
+        run: ./gradlew ccodeDistTar ccodeDistZip
+
+      - name: Compute release checksums
+        id: checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAR_SHA="$(shasum -a 256 "${{ steps.version.outputs.tar_path }}" | awk '{print $1}')"
+          echo "tar_sha=${TAR_SHA}" >> "${GITHUB_OUTPUT}"
+
+      - name: Generate Homebrew formula
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/render-homebrew-formula.sh \
+            --version "${{ steps.version.outputs.version }}" \
+            --url "https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag_name }}/ccode-${{ steps.version.outputs.version }}.tar" \
+            --sha256 "${{ steps.checksums.outputs.tar_sha }}" \
+            --output dist/ccode.rb
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccode-release-${{ steps.version.outputs.version }}
+          path: |
+            ${{ steps.version.outputs.tar_path }}
+            ${{ steps.version.outputs.zip_path }}
+            dist/ccode.rb
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ steps.version.outputs.tar_path }}
+            ${{ steps.version.outputs.zip_path }}
+            dist/ccode.rb
+          generate_release_notes: true
