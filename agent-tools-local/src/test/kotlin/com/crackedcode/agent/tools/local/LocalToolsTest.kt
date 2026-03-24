@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -96,6 +97,41 @@ class LocalToolsTest {
         }
 
         assertTrue(symlinkError.message.orEmpty().contains("linked-secret.properties"))
+    }
+
+    @Test
+    fun `read file clamps invalid line ranges`() = runBlocking {
+        val workspaceRoot = Files.createTempDirectory("local-tools-range")
+        Files.writeString(
+            workspaceRoot.resolve("sample.txt"),
+            "first\nsecond\nthird\n",
+            StandardCharsets.UTF_8,
+        )
+
+        val pastEof = ReadFileTool().execute(
+            buildJsonObject {
+                put("path", "sample.txt")
+                put("start_line", 10)
+            },
+            toolContext(workspaceRoot),
+        )
+
+        assertEquals("", pastEof.content)
+        assertEquals("4", pastEof.metadata["start_line"]?.jsonPrimitive?.content)
+        assertEquals("3", pastEof.metadata["end_line"]?.jsonPrimitive?.content)
+
+        val reversed = ReadFileTool().execute(
+            buildJsonObject {
+                put("path", "sample.txt")
+                put("start_line", 2)
+                put("end_line", -5)
+            },
+            toolContext(workspaceRoot),
+        )
+
+        assertEquals("", reversed.content)
+        assertEquals("2", reversed.metadata["start_line"]?.jsonPrimitive?.content)
+        assertEquals("1", reversed.metadata["end_line"]?.jsonPrimitive?.content)
     }
 
     @Test

@@ -84,8 +84,10 @@ class ReadFileTool : Tool {
         val file = resolveWorkspacePath(arguments.requiredString("path"), context.workspaceRoot)
         requireModelReadablePath(file, context)
         val lines = Files.readAllLines(file, StandardCharsets.UTF_8)
-        val startLine = (arguments.int("start_line") ?: 1).coerceAtLeast(1)
-        val endLine = (arguments.int("end_line") ?: lines.size).coerceAtMost(lines.size)
+        val requestedStartLine = arguments.int("start_line") ?: 1
+        val requestedEndLine = arguments.int("end_line") ?: lines.size
+        val startLine = requestedStartLine.coerceIn(1, lines.size + 1)
+        val endLine = requestedEndLine.coerceIn(startLine - 1, lines.size)
         val rendered = if (lines.isEmpty()) {
             "(empty file)"
         } else {
