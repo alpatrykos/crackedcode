@@ -2,7 +2,7 @@
 set -euo pipefail
 
 BIN_DIR="${HOME}/bin"
-INSTALL_DIR="${HOME}/.local/share/ccode"
+INSTALL_DIR="${HOME}/.local/share/agent"
 
 usage() {
   cat <<'EOF'
@@ -34,8 +34,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-rm -f "${BIN_DIR%/}/ccode"
+rm -f "${BIN_DIR%/}/agent"
 rm -rf "${INSTALL_DIR%/}"
 
-echo "Removed ccode launcher from ${BIN_DIR%/}/ccode"
+echo "Removed agent launcher from ${BIN_DIR%/}/agent"
 echo "Removed installation root ${INSTALL_DIR%/}"

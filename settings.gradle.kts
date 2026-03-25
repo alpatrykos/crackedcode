@@ -1,4 +1,4 @@
-rootProject.name = "crackedcode"
+rootProject.name = "kotlin-agent"
 
 include(
     "agent-core",

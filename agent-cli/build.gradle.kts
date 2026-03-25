@@ -10,22 +10,22 @@ kotlin {
 }
 
 application {
-    mainClass = "com.crackedcode.agent.cli.MainKt"
+    mainClass = "agent.cli.MainKt"
 }
 
 distributions {
     main {
-        distributionBaseName = "ccode"
+        distributionBaseName = "agent"
     }
 }
 
 tasks.named<CreateStartScripts>("startScripts") {
-    applicationName = "ccode"
+    applicationName = "agent"
 }
 
 tasks.processResources {
     inputs.property("version", project.version.toString())
-    filesMatching("ccode-version.txt") {
+    filesMatching("agent-version.txt") {
         expand("version" to project.version.toString())
     }
 }

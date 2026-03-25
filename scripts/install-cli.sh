@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 BIN_DIR="${HOME}/bin"
-INSTALL_DIR="${HOME}/.local/share/ccode"
+INSTALL_DIR="${HOME}/.local/share/agent"
 FORCE=0
 
 usage() {
@@ -42,24 +42,24 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-VERSION="${CCODE_VERSION:-}"
+VERSION="${AGENT_VERSION:-}"
 if [[ -z "${VERSION}" ]]; then
   VERSION="$(cd "${REPO_ROOT}" && ./gradlew -q printVersion)"
 fi
 
-DIST_DIR="${CCODE_DIST_DIR:-${REPO_ROOT}/agent-cli/build/install/ccode}"
-if [[ "${CCODE_SKIP_BUILD:-0}" != "1" ]]; then
-  (cd "${REPO_ROOT}" && ./gradlew installCcode)
+DIST_DIR="${AGENT_DIST_DIR:-${REPO_ROOT}/agent-cli/build/install/agent}"
+if [[ "${AGENT_SKIP_BUILD:-0}" != "1" ]]; then
+  (cd "${REPO_ROOT}" && ./gradlew installAgent)
 fi
 
-if [[ ! -x "${DIST_DIR}/bin/ccode" ]]; then
-  echo "Built distribution not found at ${DIST_DIR}/bin/ccode" >&2
+if [[ ! -x "${DIST_DIR}/bin/agent" ]]; then
+  echo "Built distribution not found at ${DIST_DIR}/bin/agent" >&2
   exit 1
 fi
 
 TARGET_DIR="${INSTALL_DIR%/}/${VERSION}"
 CURRENT_LINK="${INSTALL_DIR%/}/current"
-LAUNCHER_LINK="${BIN_DIR%/}/ccode"
+LAUNCHER_LINK="${BIN_DIR%/}/agent"
 
 mkdir -p "${BIN_DIR}" "${INSTALL_DIR}"
 
@@ -74,9 +74,9 @@ fi
 mkdir -p "${TARGET_DIR}"
 cp -R "${DIST_DIR}/." "${TARGET_DIR}/"
 ln -sfn "${TARGET_DIR}" "${CURRENT_LINK}"
-ln -sfn "${CURRENT_LINK}/bin/ccode" "${LAUNCHER_LINK}"
+ln -sfn "${CURRENT_LINK}/bin/agent" "${LAUNCHER_LINK}"
 
-echo "Installed ccode ${VERSION}"
+echo "Installed agent ${VERSION}"
 echo "  distribution: ${TARGET_DIR}"
 echo "  launcher: ${LAUNCHER_LINK}"
 

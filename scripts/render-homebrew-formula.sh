@@ -57,9 +57,9 @@ fi
 [[ -n "${SHA256}" ]] || { echo "--sha256 is required" >&2; exit 1; }
 
 FORMULA_CONTENT="$(cat <<EOF
-class Ccode < Formula
+class Agent < Formula
   desc "Kotlin/JVM coding agent CLI"
-  homepage "https://github.com/alpatrykos/crackedcode"
+  homepage "https://github.com/alpatrykos/kotlin-agent"
   url "${URL}"
   version "${VERSION}"
   sha256 "${SHA256}"
@@ -73,8 +73,8 @@ class Ccode < Formula
   end
 
   test do
-    assert_match "ccode #{version}", shell_output("#{bin}/ccode version")
-    assert_match "apply_patch", shell_output("#{bin}/ccode tools")
+    assert_match "agent #{version}", shell_output("#{bin}/agent version")
+    assert_match "apply_patch", shell_output("#{bin}/agent tools")
   end
 end
 EOF

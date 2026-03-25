@@ -4,7 +4,7 @@ plugins {
 }
 
 allprojects {
-    group = "com.crackedcode"
+    group = "agent"
     version = "0.1.0"
 
     repositories {
@@ -26,30 +26,30 @@ tasks.register("printVersion") {
     }
 }
 
-tasks.register("installCcode") {
+tasks.register("installAgent") {
     group = "distribution"
-    description = "Builds the installable ccode distribution."
+    description = "Builds the installable agent distribution."
     dependsOn(":agent-cli:installDist")
 }
 
-tasks.register("ccodeDistZip") {
+tasks.register("agentDistZip") {
     group = "distribution"
-    description = "Builds the ccode zip distribution."
+    description = "Builds the agent zip distribution."
     dependsOn(":agent-cli:distZip")
 }
 
-tasks.register("ccodeDistTar") {
+tasks.register("agentDistTar") {
     group = "distribution"
-    description = "Builds the ccode tar distribution."
+    description = "Builds the agent tar distribution."
     dependsOn(":agent-cli:distTar")
 }
 
-tasks.register<Exec>("verifyCcodeInstallDist") {
+tasks.register<Exec>("verifyAgentInstallDist") {
     group = "verification"
-    description = "Builds the ccode distribution and verifies the generated launcher can run a non-interactive command."
+    description = "Builds the agent distribution and verifies the generated launcher can run a non-interactive command."
     dependsOn(":agent-cli:installDist")
     doFirst {
-        val launcher = rootDir.resolve("agent-cli/build/install/ccode/bin/ccode")
+        val launcher = rootDir.resolve("agent-cli/build/install/agent/bin/agent")
         commandLine(launcher.absolutePath, "tools")
     }
 }
