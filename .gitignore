@@ -3,5 +3,6 @@
 **/build/
 /.idea/
 *.iml
+**/.agent/
 **/.crackedcode-agent/
 out/
