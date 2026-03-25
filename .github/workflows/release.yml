@@ -39,14 +39,14 @@ jobs:
 
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
           echo "tag_name=${TAG_NAME}" >> "${GITHUB_OUTPUT}"
-          echo "tar_path=agent-cli/build/distributions/ccode-${VERSION}.tar" >> "${GITHUB_OUTPUT}"
-          echo "zip_path=agent-cli/build/distributions/ccode-${VERSION}.zip" >> "${GITHUB_OUTPUT}"
+          echo "tar_path=agent-cli/build/distributions/agent-${VERSION}.tar" >> "${GITHUB_OUTPUT}"
+          echo "zip_path=agent-cli/build/distributions/agent-${VERSION}.zip" >> "${GITHUB_OUTPUT}"
 
       - name: Run test suite
-        run: ./gradlew test verifyCcodeInstallDist
+        run: ./gradlew test verifyAgentInstallDist
 
       - name: Build release archives
-        run: ./gradlew ccodeDistTar ccodeDistZip
+        run: ./gradlew agentDistTar agentDistZip
 
       - name: Compute release checksums
         id: checksums
@@ -62,18 +62,18 @@ jobs:
           set -euo pipefail
           scripts/render-homebrew-formula.sh \
             --version "${{ steps.version.outputs.version }}" \
-            --url "https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag_name }}/ccode-${{ steps.version.outputs.version }}.tar" \
+            --url "https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag_name }}/agent-${{ steps.version.outputs.version }}.tar" \
             --sha256 "${{ steps.checksums.outputs.tar_sha }}" \
-            --output dist/ccode.rb
+            --output dist/agent.rb
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ccode-release-${{ steps.version.outputs.version }}
+          name: agent-release-${{ steps.version.outputs.version }}
           path: |
             ${{ steps.version.outputs.tar_path }}
             ${{ steps.version.outputs.zip_path }}
-            dist/ccode.rb
+            dist/agent.rb
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
@@ -81,5 +81,5 @@ jobs:
           files: |
             ${{ steps.version.outputs.tar_path }}
             ${{ steps.version.outputs.zip_path }}
-            dist/ccode.rb
+            dist/agent.rb
           generate_release_notes: true
